@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Dashboard</title>
+<link rel="stylesheet" href="teacher.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="wrapper">
+
+    <header class="topbar">
+        <h1>Attendance System</h1>
+        <a class="back-link" href="index.html"><button class="logout">Logout</button></a>
+    </header>
+
+    <main class="container">
+
+        <div class="card">
+            <a class="back-link" href="teacherSection.html"><button class="back-btn">← Back</button></a>
+            <h2 class="welcome" id="welcomeMsg">Welcome, Teacher</h2>
+            <p class="subtitle" id="subjectLabel">Subject: —</p>
+
+            <!-- Send Attendance Request Button -->
+            <div class="attendance-request">
+                <button onclick="sendAttendanceRequest()" class="filter-btn">Send Attendance Request</button>
+                <span id="requestStatus" style="font-size:13px; margin-left:10px; color:#aaa;"></span>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+                <button onclick="filterTable('all')" class="filter-btn active" id="filter-all">All</button>
+                <button onclick="filterTable('Approved')" class="filter-btn" id="filter-approved">Approved</button>
+                <button onclick="filterTable('Rejected')" class="filter-btn" id="filter-rejected">Rejected</button>
+            </div>
+
+            <div class="table-section">
+                <h3>Student Attendance</h3>
+                <table id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date</th>
+                            <th>Time In</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceBody">
+                        <tr><td colspan="5" style="text-align:center; color:#aaa;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+    // ── Supabase ──
+    const { createClient } = supabase;
+    const db = createClient(
+        'https://cvmfvndfmzmhywttaujy.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2bWZ2bmRmbXptaHl3dHRhdWp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMjgwOTQsImV4cCI6MjA4ODcwNDA5NH0.1mzfGgPWNPRyb1pwra2KTrayCzAqhyn7p5CGEb4UItE'
+    );
+
+    // ── Session ──
+    const user    = JSON.parse(sessionStorage.getItem('user'));
+    const subject = JSON.parse(sessionStorage.getItem('subject'));
+    if (!user || !subject) window.location.href = 'index.html';
+
+    document.getElementById('welcomeMsg').textContent  = 'Welcome, ' + user.name;
+    document.getElementById('subjectLabel').textContent = 'Subject: ' + subject.name;
+
+    let currentFilter = 'all';
+    let allRows = [];
+
+    // ── Philippine Time ──
+    function getPHTime() {
+        return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+    }
+
+    function formatDate(d) {
+        return new Date(d).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    }
+
+    function formatTime(t) {
+        if (!t) return '—';
+        const [h, m] = t.split(':');
+        const hr = parseInt(h);
+        return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
+    }
+
+    // ── Load attendance records ──
+    async function loadAttendance() {
+        const { data, error } = await db
+            .from('attendance')
+            .select('*')
+            .eq('subject_id', subject.id)
+            .order('created_at', { ascending: false });
+
+        if (error) { console.log(error.message); return; }
+
+        allRows = data;
+        renderTable(currentFilter);
+        checkActiveRequest();
+    }
+
+    function renderTable(filter) {
+        const tbody = document.getElementById('attendanceBody');
+        const rows  = filter === 'all' ? allRows : allRows.filter(r => r.status === filter);
+
+        if (rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#aaa;">No records found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = rows.map(r => `
+            <tr data-id="${r.id}" data-status="${r.status.toLowerCase()}">
+                <td>${r.student_name || '—'}</td>
+                <td>${formatDate(r.date)}</td>
+                <td>${formatTime(r.time_in)}</td>
+                <td class="${r.status.toLowerCase()}">${r.status}</td>
+                <td>${r.status === 'Pending'
+                    ? `<button class="approve" onclick="updateStatus('${r.id}', 'Approved')">Approve</button>
+                       <button class="reject"  onclick="updateStatus('${r.id}', 'Rejected')">Reject</button>`
+                    : '-'
+                }</td>
+            </tr>
+        `).join('');
+    }
+
+    // ── Approve / Reject ──
+    async function updateStatus(id, status) {
+        const { error } = await db
+            .from('attendance')
+            .update({ status })
+            .eq('id', id);
+
+        if (error) { alert('Failed: ' + error.message); return; }
+        loadAttendance();
+    }
+
+    // ── Filter ──
+    function filterTable(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        const map = { all: 'filter-all', Approved: 'filter-approved', Rejected: 'filter-rejected' };
+        document.getElementById(map[filter]).classList.add('active');
+        renderTable(filter);
+    }
+
+    // ── Check if there's an active request ──
+    async function checkActiveRequest() {
+        const { data } = await db
+            .from('attendance_requests')
+            .select('*')
+            .eq('subject_id', subject.id)
+            .eq('is_open', true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        const statusEl = document.getElementById('requestStatus');
+
+        if (data) {
+            const expires = new Date(data.expires_at);
+            const now     = new Date();
+            if (expires > now) {
+                const mins = Math.round((expires - now) / 60000);
+                statusEl.textContent = '✅ Request active — expires in ' + mins + ' min';
+                statusEl.style.color = '#4ade80';
+            } else {
+                // Expired — close it
+                await db.from('attendance_requests').update({ is_open: false }).eq('id', data.id);
+                statusEl.textContent = '⏰ Last request expired.';
+                statusEl.style.color = '#f87171';
+            }
+        } else {
+            statusEl.textContent = 'No active request.';
+            statusEl.style.color = '#aaa';
+        }
+    }
+
+    // ── Send Attendance Request ──
+    async function sendAttendanceRequest() {
+        const ph        = getPHTime();
+        const date      = ph.toISOString().split('T')[0];
+        const expiresAt = new Date(ph.getTime() + 60 * 60 * 1000).toISOString(); // +1 hour
+
+        // Close any existing open requests for this subject
+        await db.from('attendance_requests')
+            .update({ is_open: false })
+            .eq('subject_id', subject.id)
+            .eq('is_open', true);
+
+        const { error } = await db.from('attendance_requests').insert({
+            subject_id:   subject.id,
+            requested_by: user.id,
+            date,
+            is_open:    true,
+            expires_at: expiresAt
+        });
+
+        if (error) { alert('Failed to send: ' + error.message); return; }
+
+        document.getElementById('requestStatus').textContent = '✅ Request sent! Valid for 1 hour.';
+        document.getElementById('requestStatus').style.color = '#4ade80';
+    }
+
+    // ── Auto refresh every 15 seconds ──
+    loadAttendance();
+    setInterval(loadAttendance, 15000);
+</script>
+
+</body>
+</html>

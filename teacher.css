@@ -1,0 +1,240 @@
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:"Segoe UI", sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#1e7237,#691616e5);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:flex-start;
+padding-top:40px;
+}
+
+/* Topbar */
+
+.topbar{
+width:90%;
+max-width:1000px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+padding:20px 30px;
+border-radius:16px;
+background:rgba(255,255,255,0.15);
+backdrop-filter:blur(15px);
+-webkit-backdrop-filter:blur(15px);
+border:1px solid rgba(255,255,255,0.3);
+box-shadow:0 8px 32px rgba(0,0,0,0.25);
+color:white;
+margin-top: 50px;
+}
+
+.logout{
+padding:10px 20px;
+border:none;
+border-radius:8px;
+background:white;
+color:#333;
+font-weight:500;
+cursor:pointer;
+transition:0.3s;
+}
+
+.logout:hover{
+background:#f1f1f1;
+}
+
+/* Main container */
+
+.container{
+width:90%;
+max-width:1000px;
+}
+
+.card{
+background:rgba(255,255,255,0.15);
+backdrop-filter:blur(15px);
+-webkit-backdrop-filter:blur(15px);
+border:1px solid rgba(255,255,255,0.3);
+border-radius:16px;
+padding:30px;
+box-shadow:0 10px 25px rgba(0,0,0,0.25);
+color:white;
+}
+
+.welcome{
+text-align:center;
+margin-bottom:5px;
+}
+
+.subtitle{
+text-align:center;
+margin-bottom:20px;
+color:#e0e0e0;
+}
+
+/* Table styling */
+
+.table-section h3{
+margin-bottom:15px;
+text-align:center;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:rgba(255,255,255,0.1);
+backdrop-filter:blur(5px);
+border-radius:8px;
+overflow:hidden;
+}
+
+thead{
+background:rgba(255,255,255,0.2);
+}
+
+th, td{
+padding:12px;
+text-align:left;
+border-bottom:1px solid rgba(255,255,255,0.2);
+}
+
+.pending{
+color:#1f86a5;
+font-weight:500;
+}
+
+.approved{
+color:#5eff49;
+font-weight:500;
+}
+
+/* Action buttons */
+
+.approve, .reject{
+padding:6px 12px;
+border:none;
+border-radius:6px;
+font-size:14px;
+font-weight:500;
+cursor:pointer;
+transition:0.2s;
+margin-right:5px;
+}
+
+.approve{
+background:#22c55ebd;
+color:white;
+}
+
+.approve:hover{
+background:#16a34ac2;
+}
+
+.reject{
+background:#ef444442;
+color:white;
+}
+
+.reject:hover{
+background:#dc262683;
+}
+
+/* Responsive table */
+
+@media (max-width:600px){
+table, thead, tbody, th, td, tr{
+display:block;
+}
+tr{
+margin-bottom:15px;
+}
+th{
+display:none;
+}
+td{
+padding-left:50%;
+position:relative;
+}
+td::before{
+content: attr(data-label);
+position:absolute;
+left:0;
+width:45%;
+padding-left:10px;
+font-weight:bold;
+}
+}
+
+
+.rejected{
+
+color: rgb(124, 11, 11);
+
+}
+
+/* Filter Buttons */
+.filter-buttons{
+display:flex;
+justify-content:center;
+gap:15px;
+margin-bottom:20px;
+}
+
+.filter-btn{
+padding:10px 20px;
+border:none;
+border-radius:8px;
+background:rgba(255,255,255,0.2);
+color:white;
+cursor:pointer;
+font-weight:500;
+transition:0.2s;
+}
+
+.filter-btn.active, .filter-btn:hover{
+background:rgba(255,255,255,0.35);
+}
+
+.attendance-request{
+    display:flex;
+    justify-content:center; /* aligns the button to the right edge */
+    margin-bottom:10px;       /* small spacing above filter buttons */
+}
+
+.attendance-request .filter-btn{
+    padding:10px 20px;
+    border:none;
+    border-radius:8px;
+    background:rgba(255,255,255,0.25); /* slightly lighter for distinction */
+    color:white;
+    cursor:pointer;
+    font-weight:500;
+    transition:0.2s;
+}
+
+.attendance-request .filter-btn:hover{
+    background:rgba(255,255,255,0.4);
+}
+
+.back-btn{
+    padding:8px 16px;
+    border:none;
+    border-radius:8px;
+    background:rgba(255,255,255,0.2);
+    color:white;
+    font-weight:500;
+    cursor:pointer;
+    margin-bottom:20px;
+    transition:0.2s;
+}
+
+.back-btn:hover{
+    background:rgba(255,255,255,0.35);
+    transform:translateY(-2px);
+}
